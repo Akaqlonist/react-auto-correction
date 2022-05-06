@@ -10,7 +10,7 @@ class CorrectionList extends React.Component {
 			<div className="text-center">
 				<ul style={{ listStyle: 'none' }}>
 					{Object.keys(this.props.corrections).map((key, index) => (
-						<li>
+						<li key={`correction-item-${index}`}>
 							{key}: {this.props.corrections[key]}
 						</li>
 					))}
