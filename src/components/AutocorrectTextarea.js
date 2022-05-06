@@ -4,59 +4,54 @@ class AutocorrectTextarea extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = { content: '' };
-		this.handleChange = this.handleChange.bind(this);
-		this.handleKeyDown = this.handleKeyDown.bind(this);
 		this.ref = React.createRef();
 	}
 
-	handleChange(e) {
-		this.setState({ content: e.target.value }, () => {});
-	}
+	getWord = (pos) => {
+		const { content } = this.state;
+		const before = content.substring(0, pos).match(/[!@#$%^&*()a-zA-Z0-9-_]+$/);
+		if (!before) return '';
+		return before[0];
+	};
 
-	getWord(pos) {
-		const n = this.state.content.substring(pos).match(/^[a-zA-Z0-9-_]+/);
-		const p = this.state.content.substring(0, pos).match(/[a-zA-Z0-9-_]+$/);
-		if (!p && !n) return '';
-		return (p || '') + (n || '');
-	}
+	handleChange = (e) => {
+		this.setState({ content: e.target.value });
+	};
 
-	handleKeyDown(e) {
+	handleKeyDown = (e) => {
 		if (e.keyCode === 32) {
-			const currentCursor = this.ref.current.selectionStart;
+			e.preventDefault();
 			const currentWord = this.getWord(this.ref.current.selectionStart);
 
-			if (
-				currentCursor !== this.state.content.length &&
-				this.state.content[currentCursor].match(/[a-z]/i)
-			)
-				return;
+			let newContent = this.ref.current.value;
+			let newCursorPos = this.ref.current.selectionStart;
 
-			let newStr = this.state.content;
-			let newCursor = currentCursor;
-			for (let key in this.props.corrections) {
-				if (key === currentWord) {
-					newStr =
-						newStr.substring(0, currentCursor - currentWord.length) +
-						this.props.corrections[key] +
-						newStr.substring(currentCursor);
-					newCursor =
-						currentCursor + this.props.corrections[key].length - key.length;
-					break;
+			newContent = newContent.substring(0, newCursorPos) + ' ' + newContent.substring(newCursorPos);
+			newCursorPos++;
+
+			if (newCursorPos === newContent.length || !newContent[newCursorPos].match(/[a-z]/i)) {
+				for (let key in this.props.corrections) {
+					if (key === currentWord) {
+						newContent =
+							newContent.substring(0, newCursorPos - currentWord.length - 1) +
+							this.props.corrections[key] +
+							newContent.substring(newCursorPos - 1);
+						newCursorPos += this.props.corrections[key].length - key.length;
+						break;
+					}
 				}
 			}
 
-			console.log(newStr + 'space');
-
 			this.setState(
 				{
-					content: newStr,
+					content: newContent,
 				},
 				() => {
-					this.ref.current.selectionEnd = newCursor;
+					this.ref.current.selectionEnd = newCursorPos;
 				}
 			);
 		}
-	}
+	};
 
 	render() {
 		return (
